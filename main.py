@@ -12,13 +12,9 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# === Mistral API Configuration ===
-MISTRAL_API_KEY = "KrA2y6opwresdJRHVcEQShbCt9KPwxTs"
-MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
-MISTRAL_MODEL = "mistral-medium"  # You can also try "mistral-small" or "mistral-tiny"
-
-
-# === Utility Functions ===
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+MISTRAL_API_URL = os.getenv("MISTRAL_API_URL")
+MISTRAL_MODEL = os.getenv("MISTRAL_MODEL")
 
 
 def should_skip(text: str) -> bool:
