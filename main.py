@@ -5,18 +5,35 @@ import tempfile
 import os
 import logging
 import re
+import requests
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 
-# Add your sensitive words here
-SENSITIVE_WORDS = ["Richterin "]
+# Mistral API settings
+MISTRAL_API_KEY = "0rAjkiawdjywuDfEasjBMh864vULXCAd"
+MISTRAL_API_URL = "https://api.mistral.ai/v1/llm"  # Replace with the actual Mistral API endpoint
 
-def mask_sensitive_words(text: str) -> str:
-    # Replace each sensitive word (case-insensitive) with asterisks
-    for word in SENSITIVE_WORDS:
-        text = re.sub(fr"\b{word}\b", "*****", text, flags=re.IGNORECASE)
-    return text
+# Function to call Mistral API for text processing
+def call_mistral_api(text: str) -> str:
+    headers = {
+        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    prompt = f"Identify all sensitive words in the following text and suggest replacements with asterisks: {text}"
+
+    payload = {
+        "text": text,
+        "prompt": prompt
+    }
+
+    response = requests.post(MISTRAL_API_URL, headers=headers, json=payload)
+
+    if response.status_code != 200:
+        logging.error(f"Error in Mistral API: {response.text}")
+        return text
+
+    return response.json().get("processed_text", text)
 
 def should_skip(text: str) -> bool:
     if not text or len(text.strip()) < 3:
@@ -43,7 +60,7 @@ async def replace_sensitive_words_doc(file: UploadFile = File(...)):
     for para in doc.paragraphs:
         if not should_skip(para.text):
             original = para.text
-            para.text = mask_sensitive_words(original)
+            para.text = call_mistral_api(original)
             if original != para.text:
                 logging.info(f"Paragraph replaced: '{original}' → '{para.text}'")
 
@@ -53,7 +70,7 @@ async def replace_sensitive_words_doc(file: UploadFile = File(...)):
             for cell in row.cells:
                 if not should_skip(cell.text):
                     original = cell.text
-                    cell.text = mask_sensitive_words(original)
+                    cell.text = call_mistral_api(original)
                     if original != cell.text:
                         logging.info(f"Table cell replaced: '{original}' → '{cell.text}'")
 
