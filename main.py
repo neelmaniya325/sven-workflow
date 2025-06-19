@@ -119,6 +119,3 @@ async def replace_sensitive_words_doc(file: UploadFile = File(...)):
         if os.path.exists(temp_input_path):
             os.remove(temp_input_path)
 
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8080)
